@@ -23,9 +23,9 @@ provider "azurerm" {
 terraform {
   backend "azurerm" {
     resource_group_name  = "test01"
-    storage_account_name = "everflow-tf"
+    storage_account_name = "tf"
     container_name       = "tfstate"
-    key                  = "everflow"
+    key                  = "tech-test"
     use_azuread_auth     = true
     subscription_id      = "subscription-id"
     tenant_id            = "tennant-id"
@@ -146,13 +146,13 @@ resource "azurerm_monitor_metric_alert" "high_request_count_alert" {
 
 # This is the alert group, just using an example email address 
 resource "azurerm_monitor_action_group" "action_group" {
-  name                = "everflow-action-group"
+  name                = "action-group"
   resource_group_name = data.azurerm_resource_group.resource_group.name
-  short_name          = "everflow-support"
+  short_name          = "support"
   location            = var.region
   email_receiver {
-    name                    = "everflow-support-user"
-    email_address           = "p1-alert@everflow.com"
+    name                    = "support-user"
+    email_address           = "p1-alert@test.com"
     use_common_alert_schema = true
   }
 }
