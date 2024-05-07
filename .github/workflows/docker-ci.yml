@@ -1,0 +1,96 @@
+name: Deploy Function App 
+
+on: 
+  push: 
+    branches: 
+      - main 
+
+env: 
+  DOTNET_VERSION: '3.1.x' 
+  
+
+jobs: 
+  deploy_to_test: 
+    runs-on: windows-latest 
+    environment: 
+      name: test
+    steps: 
+      - uses: actions/checkout@v3 
+      
+      - uses: actions/setup-dotnet@v1 
+        with: 
+          dotnet-version: ${{ env.DOTNET_VERSION }} 
+
+      - name: Azure Login to ACR for test
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.TEST_ACR_LOGIN_SERVER }}
+          username: ${{ secrets.TEST_ACR_USERNAME }}
+          password: ${{ secrets.TEST_ACR_PASSWORD }}
+
+      - name: Build and Push Docker image for test
+        run: |
+          docker build -t function-app-image -f ./Dockerfile .
+          docker tag function-app-image ${{ secrets.TEST_ACR }}.azurecr.io/function-app-image:latest
+          docker push ${{ secrets.TEST_ACR }}.azurecr.io/function-app-image:latest
+
+      - name: Deploy to test Azure Function App
+        uses: azure/webapps-deploy@v2 
+        with: 
+          app-name: 'everflow-app' 
+          images: '${{ secrets.TEST_ACR }}.azurecr.io/function-app-image:latest' 
+          slot-name: 'production'
+          action: 'Run'
+        env:
+          AZURE_WEBAPP_PUBLISH_PROFILE: ${{ secrets.TEST_AZ_APPSERVICE_PUBLISH_PROFILE }}
+
+
+  deploy_to_prd: 
+    runs-on: windows-latest 
+    environment: 
+      name: prod
+    steps: 
+      - uses: actions/checkout@v3 
+      
+      - uses: actions/setup-dotnet@v1 
+        with: 
+          dotnet-version: ${{ env.DOTNET_VERSION }} 
+
+      - name: Azure Login to ACR for prod
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.PROD_ACR_LOGIN_SERVER }}
+          username: ${{ secrets.PROD_ACR_USERNAME }}
+          password: ${{ secrets.PROD_ACR_PASSWORD }}
+
+      - name: Build and Push Docker image for prod
+        run: |
+          docker build -t function-app-image -f ./Dockerfile .
+          docker tag function-app-image ${{ secrets.PROD_ACR }}.azurecr.io/function-app-image:latest
+          docker push ${{ secrets.PROD_ACR }}.azurecr.io/function-app-image:latest
+
+      - name: Deploy to prod Azure Function App
+        uses: azure/webapps-deploy@v2 
+        with: 
+          app-name: 'everflow-app' 
+          images: '${{ secrets.PROD_ACR }}.azurecr.io/function-app-image:latest' 
+          slot-name: 'production'
+          action: 'Run'
+        env:
+          AZURE_WEBAPP_PUBLISH_PROFILE: ${{ secrets.PROD_AZ_APPSERVICE_PUBLISH_PROFILE }}
+
+
+  create_release: 
+    runs-on: windows-latest 
+    needs: deploy_to_prod 
+
+    steps: 
+      - name: Create Release 
+        run: | 
+          TAG="v1.0.0"  # Change tag as needed 
+          BODY="everflow release for version 1.0.0"     
+          curl -X POST \ 
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \ 
+            -H "Accept: application/vnd.github.v3+json" \ 
+            https://api.github.com/repos/${{ github.repository }}/releases \ 
+            -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"$BODY\",\"draft\":false,\"prerelease\":false}" 
