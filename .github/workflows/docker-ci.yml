@@ -80,17 +80,17 @@ jobs:
           AZURE_WEBAPP_PUBLISH_PROFILE: ${{ secrets.PROD_AZ_APPSERVICE_PUBLISH_PROFILE }}
 
 
-  create_release: 
-    runs-on: windows-latest 
-    needs: deploy_to_prd 
+  #create_release: 
+  #  runs-on: windows-latest 
+  #  needs: deploy_to_prd 
 
-    steps: 
-      - name: Create Release 
-        run: | 
-          TAG="v1.0.0"  # Change tag as needed 
-          BODY="everflow release for version 1.0.0"     
-          curl -X POST \ 
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \ 
-            -H "Accept: application/vnd.github.v3+json" \ 
-            https://api.github.com/repos/${{ github.repository }}/releases \ 
-            -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"$BODY\",\"draft\":false,\"prerelease\":false}" 
+    #steps: 
+     # - name: Create Release 
+     #   run: | 
+     #     TAG="v1.0.0"  # Change tag as needed 
+     #     BODY="everflow release for version 1.0.0"     
+     #     curl -X POST \ 
+     #       -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \ 
+     #       -H "Accept: application/vnd.github.v3+json" \ 
+     #       https://api.github.com/repos/${{ github.repository }}/releases \ 
+     #       -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"$BODY\",\"draft\":false,\"prerelease\":false}" 
